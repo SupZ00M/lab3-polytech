@@ -1,0 +1,89 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, master, develop, "*" ]
+  pull_request:
+    branches: [ main, master, develop ]
+
+jobs:
+
+  # GCC на Linux
+ 
+  linux-gcc:
+    name: Linux / GCC / ${{ matrix.build_type }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        build_type: [ Debug, Release ]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake g++
+
+      - name: Configure (CMake)
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+
+      - name: Build
+        run: cmake --build build --parallel
+
+      - name: Run tests (ctest)
+        working-directory: build
+        run: ctest --output-on-failure
+
+  # MSVC на Windows
+
+  windows-msvc:
+    name: Windows / MSVC / ${{ matrix.build_type }}
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        build_type: [ Debug, Release ]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure (CMake)
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+
+      - name: Build
+        run: cmake --build build --config ${{ matrix.build_type }} --parallel
+
+      - name: Run tests (ctest)
+        working-directory: build
+        run: ctest --output-on-failure -C ${{ matrix.build_type }}
+
+ 
+  # Clang на Linux 
+ 
+  linux-clang:
+    name: Linux / Clang / ${{ matrix.build_type }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        build_type: [ Debug, Release ]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake clang
+
+      - name: Configure (CMake)
+        env:
+          CC: clang
+          CXX: clang++
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+
+      - name: Build
+        run: cmake --build build --parallel
+
+      - name: Run tests (ctest)
+        working-directory: build
+        run: ctest --output-on-failure

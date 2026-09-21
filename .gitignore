@@ -1,0 +1,9 @@
+*.log
+*.o
+*.a
+*.out
+*.cmake
+CMakeCache.txt
+makefile
+build/
+libs/build/
